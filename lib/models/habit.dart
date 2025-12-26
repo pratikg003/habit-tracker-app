@@ -1,6 +1,8 @@
+// import 'package:flutter/foundation.dart';
+
 class Habit {
   final String id;
-  final String title;
+  String title;
   bool isDone;
 
   Habit({
@@ -8,4 +10,20 @@ class Habit {
     required this.title,
     this.isDone = false
   });
+
+  Map<String, dynamic> toJson(){
+    return{
+      'id': id,
+      'title': title,
+      'isDone': isDone
+    };
+  }
+
+  factory Habit.fromJson(Map<String, dynamic> json){
+    return Habit(
+      id: json['id'],
+      title: json['title'],
+      isDone: json['isDone']
+    );
+  }
 }
