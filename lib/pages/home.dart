@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:habit_tracker_app/models/habit.dart';
+import 'package:habit_tracker_app/widgets/add_habit_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:habit_tracker_app/widgets/habit_tile.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -17,6 +19,7 @@ class _HomeState extends State<Home> {
   final TextEditingController _controller = TextEditingController();
 
   void _addHabit() {
+    // print('ADD HABIT CALLED');
     final text = _controller.text.trim();
 
     if (text.isEmpty) return;
@@ -231,41 +234,9 @@ class _HomeState extends State<Home> {
               child: habits.isEmpty ? _buildEmptyList() : _buildHabitList(),
             ),
 
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(color: Colors.purple[200]),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      decoration: InputDecoration(
-                        hintText: 'Add a new habit',
-                        hintStyle: const TextStyle(color: Colors.purple),
-                        filled: true,
-                        fillColor: Colors.white70,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      style: const TextStyle(color: Colors.purple),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: _addHabit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white70,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                    ),
-                    child: const Icon(Icons.add, color: Colors.purple),
-                  ),
-                ],
-              ),
+            AddHabitBar(
+              controller: _controller,
+              onAdd: _addHabit,
             ),
           ],
         ),
@@ -293,53 +264,20 @@ class _HomeState extends State<Home> {
       itemBuilder: (context, index) {
         final habit = habits[index];
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: ListTile(
-            onTap: () {
-              setState(() {
-                habit.isDone = !habit.isDone;
-              });
-              _saveHabits();
-            },
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            tileColor: Colors.purple[200],
-            leading: Icon(
-              habit.isDone ? Icons.check_box : Icons.check_box_outline_blank,
-              color: Colors.white,
-            ),
-            title: Text(
-              habit.title,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                decoration: habit.isDone ? TextDecoration.lineThrough : null,
-                decorationColor: Colors.white,
-                decorationThickness: 2.0,
-              ),
-            ),
-            trailing: PopupMenuButton<String>(
-              color: Colors.white70,
-              icon: Icon(Icons.more_vert, color: Colors.white70),
-              onSelected: (value) {
-                if (value == 'edit') {
-                  _editHabit(index);
-                } else if (value == 'delete') {
-                  _deleteHabit(index);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'edit', child: Text('edit')),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Text('delete', style: TextStyle(color: Colors.red)),
-                ),
-              ],
-            ),
-          ),
+        return HabitTile(
+          habit: habit,
+          onToggle: () {
+            setState(() {
+              habit.isDone = !habit.isDone;
+            });
+            _saveHabits();
+          },
+          onDelete: () {
+            _deleteHabit(index);
+          },
+          onEdit: () {
+            _editHabit(index);
+          },
         );
       },
     );
