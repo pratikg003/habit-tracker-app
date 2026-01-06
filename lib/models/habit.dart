@@ -4,18 +4,21 @@ class Habit {
   final String id;
   String title;
   bool isDone;
+  DateTime? lastCompletedDate;
 
   Habit({
     required this.id,
     required this.title,
-    this.isDone = false
+    this.isDone = false,
+    this.lastCompletedDate
   });
 
   Map<String, dynamic> toJson(){
     return{
       'id': id,
       'title': title,
-      'isDone': isDone
+      'isDone': isDone,
+      'lastCompletedDate': lastCompletedDate?.toIso8601String()
     };
   }
 
@@ -23,7 +26,8 @@ class Habit {
     return Habit(
       id: json['id'],
       title: json['title'],
-      isDone: json['isDone']
+      isDone: json['isDone'],
+      lastCompletedDate: json['lastCompletedDate'] != null ? DateTime.parse(json['lastCompletedDate']) : null
     );
   }
 }

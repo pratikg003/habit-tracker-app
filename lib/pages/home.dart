@@ -269,6 +269,8 @@ class _HomeState extends State<Home> {
           onToggle: () {
             setState(() {
               habit.isDone = !habit.isDone;
+
+              habit.lastCompletedDate = habit.isDone ? DateTime.now() : null;
             });
             _saveHabits();
           },
