@@ -108,10 +108,37 @@ class _HomeState extends State<Home> {
     });
   }
 
+  bool _isSameDay(DateTime a, DateTime b){
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  void _resetHabitsIfNewDay(){
+    final today = DateTime.now();
+
+    bool changed = false;
+
+    for(final habit in habits) {
+      if (habit.lastCompletedDate == null) continue;
+
+      if(!_isSameDay(habit.lastCompletedDate!, today)){
+        habit.isDone = false;
+        habit.lastCompletedDate = null;
+        changed = true;
+      }
+    }
+    if(changed){
+      setState(() {
+        _saveHabits();
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadHabits();
+    _loadHabits().then((_){
+      _resetHabitsIfNewDay();
+    });
   }
 
   @override
