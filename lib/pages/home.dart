@@ -108,35 +108,40 @@ class _HomeState extends State<Home> {
     });
   }
 
-  bool _isSameDay(DateTime a, DateTime b){
+  bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  void _resetHabitsIfNewDay(){
-    final today = DateTime.now();
+  bool _isYesterday(DateTime a, DateTime b) {
+    final yesterday = DateTime(b.year, b.month, b.day - 1);
+    return a.year == yesterday.year &&
+        a.month == yesterday.month &&
+        a.day == yesterday.day;
+  }
 
+  void _resetHabitsIfNewDay() {
+    final today = DateTime.now();
     bool changed = false;
 
-    for(final habit in habits) {
+    for (final habit in habits) {
       if (habit.lastCompletedDate == null) continue;
 
-      if(!_isSameDay(habit.lastCompletedDate!, today)){
+      if (!_isSameDay(habit.lastCompletedDate!, today)) {
         habit.isDone = false;
-        habit.lastCompletedDate = null;
         changed = true;
       }
     }
-    if(changed){
-      setState(() {
-        _saveHabits();
-      });
+
+    if (changed) {
+      setState(() {});
+      _saveHabits();
     }
   }
 
   @override
   void initState() {
     super.initState();
-    _loadHabits().then((_){
+    _loadHabits().then((_) {
       _resetHabitsIfNewDay();
     });
   }
@@ -261,10 +266,7 @@ class _HomeState extends State<Home> {
               child: habits.isEmpty ? _buildEmptyList() : _buildHabitList(),
             ),
 
-            AddHabitBar(
-              controller: _controller,
-              onAdd: _addHabit,
-            ),
+            AddHabitBar(controller: _controller, onAdd: _addHabit),
           ],
         ),
       ),
@@ -295,10 +297,32 @@ class _HomeState extends State<Home> {
           habit: habit,
           onToggle: () {
             setState(() {
-              habit.isDone = !habit.isDone;
+              if (!habit.isDone) {
+                // Marking as DONE
+                if (habit.lastCompletedDate != null) {
+                  if (_isYesterday(habit.lastCompletedDate!, DateTime.now())) {
+                    habit.streak += 1;
+                  } else {
+                    habit.streak = 1; // missed day → reset
+                  }
+                } else {
+                  habit.streak = 1;
+                }
 
-              habit.lastCompletedDate = habit.isDone ? DateTime.now() : null;
+                habit.isDone = true;
+                habit.lastCompletedDate = DateTime.now();
+              } else {
+                // Undo today
+                habit.isDone = false;
+                habit.lastCompletedDate = null;
+                habit.streak = 0;
+              }
             });
+            print(
+              'Habit: ${habit.title}, '
+              'Streak: ${habit.streak}, '
+              'Last: ${habit.lastCompletedDate}',
+            );
             _saveHabits();
           },
           onDelete: () {
