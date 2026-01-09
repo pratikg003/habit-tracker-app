@@ -297,27 +297,31 @@ class _HomeState extends State<Home> {
           habit: habit,
           onToggle: () {
             setState(() {
+              final now = DateTime.now();
+
               if (!habit.isDone) {
-                // Marking as DONE
+                // MARK AS DONE
+
                 if (habit.lastCompletedDate != null) {
-                  if (_isYesterday(habit.lastCompletedDate!, DateTime.now())) {
+                  if (_isSameDay(habit.lastCompletedDate!, now)) {
+                    // Same day recheck → keep streak as-is
+                  } else if (_isYesterday(habit.lastCompletedDate!, now)) {
                     habit.streak += 1;
                   } else {
-                    habit.streak = 1; // missed day → reset
+                    habit.streak = 1;
                   }
                 } else {
                   habit.streak = 1;
                 }
 
                 habit.isDone = true;
-                habit.lastCompletedDate = DateTime.now();
+                habit.lastCompletedDate = now;
               } else {
-                // Undo today
+                // UNDO TODAY (do not touch streak or date)
                 habit.isDone = false;
-                habit.lastCompletedDate = null;
-                habit.streak = 0;
               }
             });
+
             print(
               'Habit: ${habit.title}, '
               'Streak: ${habit.streak}, '
