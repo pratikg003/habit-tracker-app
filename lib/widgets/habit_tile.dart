@@ -21,14 +21,10 @@ class HabitTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: ListTile(
         onTap: onToggle,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         tileColor: Colors.purple[200],
         leading: Icon(
-          habit.isDone
-              ? Icons.check_box
-              : Icons.check_box_outline_blank,
+          habit.isDone ? Icons.check_box : Icons.check_box_outline_blank,
           color: Colors.white,
         ),
         title: Text(
@@ -37,27 +33,43 @@ class HabitTile extends StatelessWidget {
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            decoration:
-                habit.isDone ? TextDecoration.lineThrough : null,
+            decoration: habit.isDone ? TextDecoration.lineThrough : null,
           ),
         ),
-        trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert, color: Colors.white),
-          onSelected: (value) {
-            if (value == 'edit') {
-              onEdit();
-            } else if (value == 'delete') {
-              onDelete();
-            }
-          },
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'edit',
-              child: Text('Edit'),
-            ),
-            PopupMenuItem(
-              value: 'delete',
-              child: Text('Delete', style: TextStyle(color: Colors.red),),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (habit.streak > 0)
+              Row(
+                children: [
+                  const Text('🔥', style: TextStyle(fontSize: 16)),
+                  const SizedBox(width: 4),
+                  Text(
+                    habit.streak.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: Colors.white),
+              onSelected: (value) {
+                if (value == 'edit') {
+                  onEdit();
+                } else if (value == 'delete') {
+                  onDelete();
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(value: 'edit', child: Text('Edit')),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Text('Delete', style: TextStyle(color: Colors.red)),
+                ),
+              ],
             ),
           ],
         ),

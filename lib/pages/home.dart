@@ -126,8 +126,15 @@ class _HomeState extends State<Home> {
     for (final habit in habits) {
       if (habit.lastCompletedDate == null) continue;
 
+      // If it's a new day
       if (!_isSameDay(habit.lastCompletedDate!, today)) {
         habit.isDone = false;
+
+        // If yesterday was ALSO missed → reset streak
+        if (!_isYesterday(habit.lastCompletedDate!, today)) {
+          habit.streak = 0;
+        }
+
         changed = true;
       }
     }
@@ -300,11 +307,12 @@ class _HomeState extends State<Home> {
               final now = DateTime.now();
 
               if (!habit.isDone) {
-                // MARK AS DONE
+                // MARK AS DONE (CHECK)
 
                 if (habit.lastCompletedDate != null) {
                   if (_isSameDay(habit.lastCompletedDate!, now)) {
-                    // Same day recheck → keep streak as-is
+                    // same day re-check after undo
+                    habit.streak += 1;
                   } else if (_isYesterday(habit.lastCompletedDate!, now)) {
                     habit.streak += 1;
                   } else {
@@ -317,8 +325,13 @@ class _HomeState extends State<Home> {
                 habit.isDone = true;
                 habit.lastCompletedDate = now;
               } else {
-                // UNDO TODAY (do not touch streak or date)
+                // UNCHECK TODAY
                 habit.isDone = false;
+
+                if (habit.lastCompletedDate != null &&
+                    _isSameDay(habit.lastCompletedDate!, now)) {
+                  habit.streak = habit.streak > 0 ? habit.streak - 1 : 0;
+                }
               }
             });
 
