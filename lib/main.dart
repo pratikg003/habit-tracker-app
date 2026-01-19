@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:habit_tracker_app/pages/home.dart';
+import 'package:habit_tracker_app/providers/habit_provider.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor: Color(0xffce93d8), 
+      statusBarColor: Color(0xffce93d8),
       statusBarIconBrightness: Brightness.light,
     ),
   );
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(create: (_) => HabitProvider(), child: MyApp()),
+  );
 }
 
 class MyApp extends StatelessWidget {

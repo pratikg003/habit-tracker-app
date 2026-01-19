@@ -1,9 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:habit_tracker_app/models/habit.dart';
+import 'package:habit_tracker_app/providers/habit_provider.dart';
 import 'package:habit_tracker_app/widgets/add_habit_bar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import 'package:habit_tracker_app/widgets/habit_tile.dart';
 
 class Home extends StatefulWidget {
@@ -14,7 +12,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  List<Habit> habits = [];
+  // List<Habit> habits = [];
 
   final TextEditingController _controller = TextEditingController();
 
@@ -24,10 +22,7 @@ class _HomeState extends State<Home> {
 
     if (text.isEmpty) return;
 
-    setState(() {
-      habits.add(Habit(id: DateTime.now().toString(), title: text));
-    });
-    _saveHabits();
+    context.read<HabitProvider>().addHabit(text);
 
     _controller.clear();
 
@@ -35,13 +30,11 @@ class _HomeState extends State<Home> {
   }
 
   void _deleteHabit(int index) {
-    setState(() {
-      habits.removeAt(index);
-    });
-    _saveHabits();
+    context.read<HabitProvider>().deleteHabit(index);
   }
 
   void _editHabit(int index) {
+    final habits = context.read<HabitProvider>().habits;
     TextEditingController editController = TextEditingController(
       text: habits[index].title,
     );
@@ -68,11 +61,10 @@ class _HomeState extends State<Home> {
             ),
             ElevatedButton(
               onPressed: () {
-                if (editController.text.trim().isEmpty) return;
-                setState(() {
-                  habits[index].title = editController.text.trim();
-                });
-                _saveHabits();
+                final newTitle = editController.text.trim();
+                if (newTitle.isEmpty) return;
+
+                context.read<HabitProvider>().editHabit(index, newTitle);
                 Navigator.pop(context); // close dialog
               },
               child: const Text('Save'),
@@ -84,112 +76,10 @@ class _HomeState extends State<Home> {
     FocusScope.of(context).unfocus();
   }
 
-  Future<void> _saveHabits() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final habitList = habits
-        .map((habit) => jsonEncode(habit.toJson()))
-        .toList();
-
-    await prefs.setStringList('habits', habitList);
-  }
-
-  Future<void> _loadHabits() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final List<String>? savedHabits = prefs.getStringList('habits');
-
-    if (savedHabits == null) return;
-
-    setState(() {
-      habits = savedHabits
-          .map((habitString) => Habit.fromJson(jsonDecode(habitString)))
-          .toList();
-    });
-  }
-
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
-  bool _isYesterday(DateTime a, DateTime b) {
-    final yesterday = DateTime(b.year, b.month, b.day - 1);
-    return a.year == yesterday.year &&
-        a.month == yesterday.month &&
-        a.day == yesterday.day;
-  }
-
-  void _resetHabitsIfNewDay() {
-    final today = DateTime.now();
-    bool changed = false;
-
-    for (final habit in habits) {
-      if (habit.lastCompletedDate == null) continue;
-
-      // If it's a new day
-      if (!_isSameDay(habit.lastCompletedDate!, today)) {
-        habit.isDone = false;
-
-        // If yesterday was ALSO missed → reset streak
-        if (!_isYesterday(habit.lastCompletedDate!, today)) {
-          habit.streak = 0;
-        }
-
-        changed = true;
-      }
-    }
-
-    if (changed) {
-      setState(() {});
-      _saveHabits();
-    }
-  }
-
-  void _toggleHabit(Habit habit) {
-    setState(() {
-      final now = DateTime.now();
-
-      if (!habit.isDone) {
-        // MARK AS DONE (CHECK)
-
-        if (habit.lastCompletedDate != null) {
-          if (_isSameDay(habit.lastCompletedDate!, now)) {
-            // same day re-check after undo
-            habit.streak += 1;
-          } else if (_isYesterday(habit.lastCompletedDate!, now)) {
-            habit.streak += 1;
-          } else {
-            habit.streak = 1;
-          }
-        } else {
-          habit.streak = 1;
-        }
-
-        habit.isDone = true;
-        habit.lastCompletedDate = now;
-      } else {
-        // UNCHECK TODAY
-        habit.isDone = false;
-
-        if (habit.lastCompletedDate != null &&
-            _isSameDay(habit.lastCompletedDate!, now)) {
-          habit.streak = habit.streak > 0 ? habit.streak - 1 : 0;
-        }
-      }
-    });
-    _saveHabits();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadHabits().then((_) {
-      _resetHabitsIfNewDay();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    final habits = context.watch<HabitProvider>().habits;
+
     return Scaffold(
       backgroundColor: Colors.purple[100],
       drawer: Drawer(
@@ -245,6 +135,20 @@ class _HomeState extends State<Home> {
               },
             ),
 
+            ListTile(
+              leading: Icon(Icons.info, color: Colors.white),
+              title: Text(
+                'T H E M E',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
             ListTile(
               leading: Icon(Icons.info, color: Colors.white),
               title: Text(
@@ -326,6 +230,7 @@ class _HomeState extends State<Home> {
   }
 
   ListView _buildHabitList() {
+    final habits = context.watch<HabitProvider>().habits;
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       itemCount: habits.length,
@@ -335,7 +240,7 @@ class _HomeState extends State<Home> {
         return HabitTile(
           habit: habit,
           onToggle: () {
-            _toggleHabit(habit);
+            context.read<HabitProvider>().toggleHabit(index);
           },
           onDelete: () {
             _deleteHabit(index);
