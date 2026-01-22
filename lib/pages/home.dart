@@ -132,6 +132,7 @@ class _HomeState extends State<Home> {
               ),
               onTap: () {
                 Navigator.pop(context); // close drawer
+                Navigator.pushNamed(context, '/settings');
               },
             ),
 
@@ -147,6 +148,7 @@ class _HomeState extends State<Home> {
               ),
               onTap: () {
                 Navigator.pop(context);
+                Navigator.pushNamed(context, '/themes');
               },
             ),
             ListTile(
@@ -161,6 +163,7 @@ class _HomeState extends State<Home> {
               ),
               onTap: () {
                 Navigator.pop(context);
+                Navigator.pushNamed(context, '/about');
               },
             ),
           ],
